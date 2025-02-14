@@ -259,22 +259,6 @@ const Sidebar = () => {
                   {renderSettings.exposure.toFixed(1)}
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="shadows"
-                  checked={renderSettings.shadows}
-                  onChange={(e) =>
-                    updateRenderSettings({ shadows: e.target.checked })
-                  }
-                  className="rounded"
-                />
-                <label htmlFor="shadows" className="text-sm font-medium">
-                  Enable Shadows
-                </label>
-              </div>
-
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -321,7 +305,8 @@ const Sidebar = () => {
     }
   };
   const nodeSelector = () => {
-    return (<div className="border-b p-4">
+    return (
+      <div className="border-b p-4">
         <h2 className="text-lg font-semibold">Node Selector</h2>
         <div className="max-h-32 overflow-y-auto mt-2 scrollbar-hide">
           <ul className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
@@ -343,8 +328,9 @@ const Sidebar = () => {
             ))}
           </ul>
         </div>
-      </div>);
-  }
+      </div>
+    );
+  };
 
   return (
     <div className="w-full md:w-[300px] border-t md:border-t-0 md:border-l h-[300px] md:h-full bg-white flex flex-col md:flex-row">

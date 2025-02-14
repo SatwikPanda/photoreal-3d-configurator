@@ -42,8 +42,6 @@ interface ModelContextType {
     toneMapping: THREE.ToneMapping;
     exposure: number;
     outputEncoding: THREE.TextureEncoding;
-    shadows: boolean;
-    ambientOcclusion: boolean;
     aoIntensity: number;
   };
   updateRenderSettings: (
@@ -64,8 +62,6 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
     toneMapping: THREE.ACESFilmicToneMapping,
     exposure: 1.0,
     outputEncoding: THREE.sRGBEncoding,
-    shadows: true,
-    ambientOcclusion: true,
     aoIntensity: 1.0,
   });
 
