@@ -27,58 +27,36 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
 
-  const handleClick = (event: MouseEvent) => {
-    if (!containerRef.current || !sceneRef.current || !cameraRef.current)
-      return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-    raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
-    const intersects = raycasterRef.current.intersectObjects(
-      sceneRef.current.children,
-      true
-    );
-
-    if (intersects.length > 0) {
-      const selectedObject = intersects[0].object;
-      setSelectedNode(selectedObject);
-    }
-  };
-
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // Improved camera setup
+    // Camera setup
     const camera = new THREE.PerspectiveCamera(
-      45, // More natural FOV
-      containerRef.current.clientWidth / containerRef.current.clientHeight,
+      45,
+      container.clientWidth / container.clientHeight,
       0.1,
       1000
     );
     camera.position.set(5, 5, 5);
     cameraRef.current = camera;
 
-    // Enhanced renderer setup
+    // Renderer setup
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
       preserveDrawingBuffer: true,
-      toneMapping: THREE.ACESFilmicToneMapping,
-      outputColorSpace: THREE.SRGBColorSpace,
     });
-    renderer.setSize(
-      containerRef.current.clientWidth,
-      containerRef.current.clientHeight
-    );
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    containerRef.current.appendChild(renderer.domElement);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
     // Improved lighting setup
@@ -117,28 +95,45 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
     animate();
 
     const handleResize = () => {
-      if (!containerRef.current || !cameraRef.current || !rendererRef.current)
-        return;
-      const width = containerRef.current.clientWidth;
-      const height = containerRef.current.clientHeight;
+      if (!container || !cameraRef.current || !rendererRef.current) return;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
 
       cameraRef.current.aspect = width / height;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(width, height, false);
     };
 
-    window.addEventListener("resize", handleResize);
-    handleResize();
+    const handleClick = (event: MouseEvent) => {
+      if (!sceneRef.current || !cameraRef.current) return;
 
-    containerRef.current.addEventListener("click", handleClick);
+      const rect = container.getBoundingClientRect();
+      mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+      const intersects = raycasterRef.current.intersectObjects(
+        sceneRef.current.children,
+        true
+      );
+
+      if (intersects.length > 0) {
+        const selectedObject = intersects[0].object;
+        setSelectedNode(selectedObject);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    container.addEventListener("click", handleClick);
+    handleResize();
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      if (rendererRef.current && containerRef.current) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      container.removeEventListener("click", handleClick);
+      if (rendererRef.current) {
+        container.removeChild(rendererRef.current.domElement);
         rendererRef.current.dispose();
       }
-      containerRef.current?.removeEventListener("click", handleClick);
     };
   }, []);
 
@@ -201,7 +196,7 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
     }
   }, [model, setIsLoading]);
 
-  // Handle HDRI updates
+  // Handle HDRI updates with intensity
   useEffect(() => {
     if (!sceneRef.current || !rendererRef.current) return;
 
@@ -219,6 +214,7 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
           const envMap = pmremGenerator.fromEquirectangular(currentHdri);
           scene.environment = envMap.texture;
           scene.background = envMap.texture;
+          renderer.toneMappingExposure = hdriIntensity;
           currentHdri.dispose();
         } else {
           const exrLoader = new EXRLoader();
@@ -226,6 +222,7 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
           const envMap = pmremGenerator.fromEquirectangular(texture);
           scene.environment = envMap.texture;
           scene.background = envMap.texture;
+          renderer.toneMappingExposure = hdriIntensity;
           texture.dispose();
         }
       } catch (error) {
@@ -237,13 +234,18 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
     };
 
     loadHDRI();
-  }, [currentHdri, setIsLoading]);
+  }, [currentHdri, hdriIntensity, setIsLoading]);
 
+  // Update HDRI intensity
   useEffect(() => {
     if (!rendererRef.current) return;
+    rendererRef.current.toneMappingExposure = hdriIntensity;
+  }, [hdriIntensity]);
 
+  // Update renderer settings
+  useEffect(() => {
+    if (!rendererRef.current) return;
     rendererRef.current.toneMappingExposure = renderSettings.exposure;
-    rendererRef.current.shadowMap.enabled = renderSettings.shadows;
   }, [renderSettings]);
 
   return <div ref={containerRef} className="w-full h-full" />;

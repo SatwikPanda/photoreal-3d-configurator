@@ -6,6 +6,13 @@ import * as THREE from "three";
 import { loadHDRI } from "../utils/hdriLoader";
 import { TextureLoader } from "three";
 
+interface RenderSettings {
+  toneMapping: THREE.ToneMapping;
+  exposure: number;
+  outputColorSpace: THREE.ColorSpace;
+  aoIntensity: number;
+}
+
 interface ModelContextType {
   model: GLTF | null;
   setModel: (model: GLTF | null) => void;
@@ -38,15 +45,8 @@ interface ModelContextType {
       | "alphaMap"
       | "aoMap"
   ) => void;
-  renderSettings: {
-    toneMapping: THREE.ToneMapping;
-    exposure: number;
-    outputEncoding: THREE.TextureEncoding;
-    aoIntensity: number;
-  };
-  updateRenderSettings: (
-    settings: Partial<ModelContextType["renderSettings"]>
-  ) => void;
+  renderSettings: RenderSettings;
+  updateRenderSettings: (settings: Partial<RenderSettings>) => void;
 }
 
 const ModelContext = createContext<ModelContextType | undefined>(undefined);
@@ -58,10 +58,10 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   const [hdriIntensity, setHdriIntensity] = useState(1);
   const [currentHdri, setCurrentHdri] = useState<THREE.Texture | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [renderSettings, setRenderSettings] = useState({
+  const [renderSettings, setRenderSettings] = useState<RenderSettings>({
     toneMapping: THREE.ACESFilmicToneMapping,
     exposure: 1.0,
-    outputEncoding: THREE.sRGBEncoding,
+    outputColorSpace: THREE.SRGBColorSpace,
     aoIntensity: 1.0,
   });
 
@@ -127,7 +127,7 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateRenderSettings = (settings: Partial<typeof renderSettings>) => {
+  const updateRenderSettings = (settings: Partial<RenderSettings>) => {
     setRenderSettings((prev) => ({ ...prev, ...settings }));
   };
 

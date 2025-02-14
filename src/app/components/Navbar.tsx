@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FiUpload, FiChevronDown } from "react-icons/fi";
 import { useModel } from "../context/ModelContext";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import * as THREE from "three";
 
 const Navbar = () => {
   const [showCompressionMenu, setShowCompressionMenu] = useState(false);
@@ -26,7 +27,7 @@ const Navbar = () => {
       // Collect all meshes
       const nodes: THREE.Object3D[] = [];
       gltf.scene.traverse((object) => {
-        if (object.isMesh) {
+        if (object instanceof THREE.Mesh) {
           nodes.push(object);
         }
       });

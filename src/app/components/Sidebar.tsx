@@ -226,7 +226,7 @@ const Sidebar = () => {
                   value={renderSettings.toneMapping}
                   onChange={(e) =>
                     updateRenderSettings({
-                      toneMapping: Number(e.target.value),
+                      toneMapping: Number(e.target.value) as THREE.ToneMapping,
                     })
                   }
                 >
@@ -259,44 +259,28 @@ const Sidebar = () => {
                   {renderSettings.exposure.toFixed(1)}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="ao"
-                  checked={renderSettings.ambientOcclusion}
-                  onChange={(e) =>
-                    updateRenderSettings({ ambientOcclusion: e.target.checked })
-                  }
-                  className="rounded"
-                />
-                <label htmlFor="ao" className="text-sm font-medium">
-                  Ambient Occlusion
-                </label>
-              </div>
 
-              {renderSettings.ambientOcclusion && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    AO Intensity
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="3"
-                    step="0.1"
-                    value={renderSettings.aoIntensity}
-                    onChange={(e) =>
-                      updateRenderSettings({
-                        aoIntensity: Number(e.target.value),
-                      })
-                    }
-                    className="w-full"
-                  />
-                  <div className="text-sm text-gray-500">
-                    {renderSettings.aoIntensity.toFixed(1)}
-                  </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Ambient Occlusion Intensity
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="0.1"
+                  value={renderSettings.aoIntensity}
+                  onChange={(e) =>
+                    updateRenderSettings({
+                      aoIntensity: Number(e.target.value),
+                    })
+                  }
+                  className="w-full"
+                />
+                <div className="text-sm text-gray-500">
+                  {renderSettings.aoIntensity.toFixed(1)}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         );
@@ -304,6 +288,7 @@ const Sidebar = () => {
         return null;
     }
   };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const nodeSelector = () => {
     return (
       <div className="border-b p-4">
