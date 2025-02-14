@@ -53,40 +53,56 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    const container = containerRef.current;
+    // Improved camera setup
     const camera = new THREE.PerspectiveCamera(
-      75,
-      container.clientWidth / container.clientHeight,
+      45, // More natural FOV
+      containerRef.current.clientWidth / containerRef.current.clientHeight,
       0.1,
       1000
     );
-    camera.position.set(0, 2, 5);
+    camera.position.set(5, 5, 5);
     cameraRef.current = camera;
 
+    // Enhanced renderer setup
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
+      alpha: true,
+      preserveDrawingBuffer: true,
       toneMapping: THREE.ACESFilmicToneMapping,
       outputColorSpace: THREE.SRGBColorSpace,
     });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
+    renderer.setSize(
+      containerRef.current.clientWidth,
+      containerRef.current.clientHeight
+    );
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    pmremGenerator.compileEquirectangularShader();
+    // Improved lighting setup
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
 
-    new EXRLoader().load("/hdris/studio.exr", (texture) => {
-      const envMap = pmremGenerator.fromEquirectangular(texture);
-      scene.environment = envMap.texture;
-      scene.background = envMap.texture;
-      texture.dispose();
-      pmremGenerator.dispose();
-    });
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 5, 5);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 1024;
+    directionalLight.shadow.mapSize.height = 1024;
+    directionalLight.shadow.camera.near = 0.1;
+    directionalLight.shadow.camera.far = 20;
+    directionalLight.shadow.bias = -0.001;
+    scene.add(directionalLight);
 
+    // Enhanced controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controls.minDistance = 2;
+    controls.maxDistance = 10;
+    controls.maxPolarAngle = Math.PI / 1.5;
+    controls.target.set(0, 0, 0);
     controlsRef.current = controls;
 
     const animate = () => {
@@ -126,6 +142,7 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
     };
   }, []);
 
+  // Updated model handling
   useEffect(() => {
     if (!sceneRef.current || !model) return;
 
@@ -137,8 +154,32 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
       }
 
       model.scene.name = "importedModel";
+
+      // Enhanced material and mesh handling
+      model.scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.castShadow = true;
+          object.receiveShadow = true;
+
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach((mat) => {
+                mat.side = THREE.DoubleSide;
+                mat.shadowSide = THREE.DoubleSide;
+                mat.needsUpdate = true;
+              });
+            } else {
+              object.material.side = THREE.DoubleSide;
+              object.material.shadowSide = THREE.DoubleSide;
+              object.material.needsUpdate = true;
+            }
+          }
+        }
+      });
+
       sceneRef.current.add(model.scene);
 
+      // Better model positioning
       const box = new THREE.Box3().setFromObject(model.scene);
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
@@ -148,14 +189,10 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
       model.scene.scale.setScalar(scale);
       model.scene.position.sub(center.multiplyScalar(scale));
 
-      model.scene.traverse((object) => {
-        if (object instanceof THREE.Mesh && object.material) {
-          object.material.side = THREE.DoubleSide;
-        }
-      });
-
+      // Position camera to better view the model
       if (cameraRef.current && controlsRef.current) {
-        cameraRef.current.position.set(0, 2, 5);
+        const distance = maxDim * 2;
+        cameraRef.current.position.set(distance, distance, distance);
         controlsRef.current.target.set(0, 0, 0);
         controlsRef.current.update();
       }
