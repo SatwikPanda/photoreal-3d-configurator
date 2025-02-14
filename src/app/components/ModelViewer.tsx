@@ -9,7 +9,7 @@ const ModelViewer = () => {
   const { model, isLoading } = useModel();
 
   return (
-    <div className="h-full w-full bg-neutral-100 relative">
+    <div className="h-[calc(100vh-380px)] md:h-full w-full bg-neutral-100 relative">
       <Suspense fallback={<Loader />}>
         <ThreeScene model={model} />
         {isLoading && <Loader />}

@@ -10,7 +10,7 @@ const SidebarIcons = ({
   setSelectedOption,
 }: SidebarIconsProps) => {
   return (
-    <div className="w-fit border-r h-full flex flex-col gap-4 py-4">
+    <div className="w-full md:w-fit border-b md:border-b-0 md:border-r h-12 md:h-full flex flex-row items-center md:flex-col gap-4 p-2 md:py-4">
       <button
         onClick={() => setSelectedOption("lighting")}
         className={`p-2 hover:bg-gray-100 ${

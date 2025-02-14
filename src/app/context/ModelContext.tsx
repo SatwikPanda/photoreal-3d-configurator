@@ -4,6 +4,7 @@ import { createContext, useContext, useState } from "react";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import * as THREE from "three";
 import { loadHDRI } from "../utils/hdriLoader";
+import { TextureLoader } from "three";
 
 interface ModelContextType {
   model: GLTF | null;
@@ -18,6 +19,36 @@ interface ModelContextType {
   currentHdri: THREE.Texture | null;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  updateNodeTexture: (
+    textureType:
+      | "map"
+      | "normalMap"
+      | "roughnessMap"
+      | "metalnessMap"
+      | "alphaMap"
+      | "aoMap",
+    file: File
+  ) => Promise<void>;
+  removeNodeTexture: (
+    textureType:
+      | "map"
+      | "normalMap"
+      | "roughnessMap"
+      | "metalnessMap"
+      | "alphaMap"
+      | "aoMap"
+  ) => void;
+  renderSettings: {
+    toneMapping: THREE.ToneMapping;
+    exposure: number;
+    outputEncoding: THREE.TextureEncoding;
+    shadows: boolean;
+    ambientOcclusion: boolean;
+    aoIntensity: number;
+  };
+  updateRenderSettings: (
+    settings: Partial<ModelContextType["renderSettings"]>
+  ) => void;
 }
 
 const ModelContext = createContext<ModelContextType | undefined>(undefined);
@@ -29,6 +60,14 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   const [hdriIntensity, setHdriIntensity] = useState(1);
   const [currentHdri, setCurrentHdri] = useState<THREE.Texture | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [renderSettings, setRenderSettings] = useState({
+    toneMapping: THREE.ACESFilmicToneMapping,
+    exposure: 1.0,
+    outputEncoding: THREE.sRGBEncoding,
+    shadows: true,
+    ambientOcclusion: true,
+    aoIntensity: 1.0,
+  });
 
   const loadHdri = async (file: File) => {
     setIsLoading(true);
@@ -40,6 +79,60 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const updateNodeTexture = async (
+    textureType:
+      | "map"
+      | "normalMap"
+      | "roughnessMap"
+      | "metalnessMap"
+      | "alphaMap"
+      | "aoMap",
+    file: File
+  ) => {
+    setIsLoading(true);
+    try {
+      if (!selectedNode || !(selectedNode as THREE.Mesh).material) return;
+
+      const url = URL.createObjectURL(file);
+      const loader = new TextureLoader();
+      const texture = await loader.loadAsync(url);
+
+      const material = (selectedNode as THREE.Mesh)
+        .material as THREE.MeshStandardMaterial;
+      material[textureType] = texture;
+      material.needsUpdate = true;
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error loading texture:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const removeNodeTexture = (
+    textureType:
+      | "map"
+      | "normalMap"
+      | "roughnessMap"
+      | "metalnessMap"
+      | "alphaMap"
+      | "aoMap"
+  ) => {
+    if (!selectedNode || !(selectedNode as THREE.Mesh).material) return;
+
+    const material = (selectedNode as THREE.Mesh)
+      .material as THREE.MeshStandardMaterial;
+    if (material[textureType]) {
+      material[textureType].dispose();
+      material[textureType] = null;
+      material.needsUpdate = true;
+    }
+  };
+
+  const updateRenderSettings = (settings: Partial<typeof renderSettings>) => {
+    setRenderSettings((prev) => ({ ...prev, ...settings }));
   };
 
   return (
@@ -57,6 +150,10 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
         currentHdri,
         isLoading,
         setIsLoading,
+        updateNodeTexture,
+        removeNodeTexture,
+        renderSettings,
+        updateRenderSettings,
       }}
     >
       {children}

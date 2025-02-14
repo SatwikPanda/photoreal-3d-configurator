@@ -2,18 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --font-geist-sans: "";
-  --font-geist-mono: "";
+/* Custom range input styles */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
 }
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+/* Track styles */
+input[type="range"]::-webkit-slider-runnable-track {
+  background: #e5e5e5;
+  height: 10px;
+  border-radius: 5px;
 }
 
-canvas {
-  touch-action: none;
+input[type="range"]::-moz-range-track {
+  background: #e5e5e5;
+  height: 10px;
+  border-radius: 5px;
+}
+
+/* Progress fill */
+input[type="range"]::-webkit-progress-value {
+  background: black;
+  border-radius: 5px;
+}
+
+input[type="range"]::-moz-range-progress {
+  background: black;
+  height: 10px;
+  border-radius: 5px;
+}
+
+/* Remove the thumb */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+  box-shadow: -1000px 0 0 1000px black;
+}
+
+input[type="range"]::-moz-range-thumb {
+  border: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+input[type="range"]:focus {
+  outline: none;
 }

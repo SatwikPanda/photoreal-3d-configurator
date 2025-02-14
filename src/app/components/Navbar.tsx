@@ -53,7 +53,7 @@ const Navbar = () => {
         </li>
         <li className="relative">
           <button
-            className="flex items-center gap-2 border text-black py-1 px-3 rounded-md hover:bg-gray-100"
+            className="items-center gap-2 hidden border text-black py-1 px-3 rounded-md hover:bg-gray-100"
             onClick={() => setShowCompressionMenu(!showCompressionMenu)}
           >
             Compression: {compression}
