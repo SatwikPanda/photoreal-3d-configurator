@@ -47,6 +47,8 @@ interface ModelContextType {
   ) => void;
   renderSettings: RenderSettings;
   updateRenderSettings: (settings: Partial<RenderSettings>) => void;
+  selectedOption: string;
+  setSelectedOption: (option: string) => void;
 }
 
 const ModelContext = createContext<ModelContextType | undefined>(undefined);
@@ -64,6 +66,7 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
     outputColorSpace: THREE.SRGBColorSpace,
     aoIntensity: 1.0,
   });
+  const [selectedOption, setSelectedOption] = useState("lighting");
 
   const loadHdri = async (file: File) => {
     setIsLoading(true);
@@ -150,6 +153,8 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
         removeNodeTexture,
         renderSettings,
         updateRenderSettings,
+        selectedOption,
+        setSelectedOption,
       }}
     >
       {children}

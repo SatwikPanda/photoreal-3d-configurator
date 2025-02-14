@@ -9,9 +9,10 @@ import { useModel } from "../context/ModelContext"; // Fixed import path
 
 interface ThreeSceneProps {
   model: GLTF | null;
+  onNodeSelected?: () => void; // Add new prop
 }
 
-const ThreeScene = ({ model }: ThreeSceneProps) => {
+const ThreeScene = ({ model, onNodeSelected }: ThreeSceneProps) => {
   const {
     hdriIntensity,
     currentHdri,
@@ -120,6 +121,7 @@ const ThreeScene = ({ model }: ThreeSceneProps) => {
       if (intersects.length > 0) {
         const selectedObject = intersects[0].object;
         setSelectedNode(selectedObject);
+        onNodeSelected?.(); // Call the callback when a node is selected
       }
     };
 

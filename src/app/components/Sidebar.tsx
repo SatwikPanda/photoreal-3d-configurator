@@ -7,7 +7,6 @@ import { useModel } from "../context/ModelContext";
 import { FiX } from "react-icons/fi";
 
 const Sidebar = () => {
-  const [selectedOption, setSelectedOption] = useState("lighting");
   const {
     nodes,
     selectedNode,
@@ -19,10 +18,16 @@ const Sidebar = () => {
     removeNodeTexture,
     renderSettings,
     updateRenderSettings,
+    selectedOption,
+    setSelectedOption,
   } = useModel();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedFiles, setSelectedFiles] = useState<{ [key: string]: string }>(
     {}
   );
+  const [materialFiles, setMaterialFiles] = useState<{
+    [nodeId: string]: { [key: string]: string };
+  }>({});
 
   const handleHdriUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,12 +38,20 @@ const Sidebar = () => {
 
   const handleTextureUpload =
     (type: "map" | "normalMap" | "roughnessMap" | "metalnessMap" | "aoMap") =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-        updateNodeTexture(type, file);
-        setSelectedFiles((prev) => ({ ...prev, [type]: file.name }));
-      }
+      if (!file || !selectedNode) return;
+
+      await updateNodeTexture(type, file);
+
+      // Store the file name under the node's ID
+      setMaterialFiles((prev) => ({
+        ...prev,
+        [selectedNode.uuid]: {
+          ...(prev[selectedNode.uuid] || {}),
+          [type]: file.name,
+        },
+      }));
     };
 
   const MaterialInput = ({
@@ -53,33 +66,35 @@ const Sidebar = () => {
     <div className="relative">
       <label className="block text-sm font-medium mb-1">{label}</label>
       <div className="flex gap-2 items-center">
-        <div className="flex-1 flex flex-col gap-1">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleTextureUpload(type)}
-            className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-50 file:text-blue-700
-              hover:file:bg-blue-100"
-          />
-          {selectedFiles[type] && (
-            <p className="text-xs text-gray-500 truncate pl-2">
-              Selected: {selectedFiles[type]}
-            </p>
-          )}
+        <div className="flex-1">
+          <label
+            className="block w-[10rem] text-sm text-gray-500 cursor-pointer
+            py-2 px-4 rounded-full border truncate
+            hover:bg-blue-50"
+          >
+            {selectedNode?.uuid
+              ? materialFiles[selectedNode.uuid]?.[type] || "Choose file"
+              : "Choose file"}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleTextureUpload(type)}
+              className="hidden"
+            />
+          </label>
         </div>
         {hasValue && (
           <button
             onClick={() => {
               removeNodeTexture(type);
-              setSelectedFiles((prev) => {
-                const newFiles = { ...prev };
-                delete newFiles[type];
-                return newFiles;
-              });
+              // Remove the file name from storage
+              if (selectedNode) {
+                setMaterialFiles((prev) => {
+                  const nodeFiles = { ...prev[selectedNode.uuid] };
+                  delete nodeFiles[type];
+                  return { ...prev, [selectedNode.uuid]: nodeFiles };
+                });
+              }
             }}
             className="p-1 hover:bg-red-100 rounded-full"
             title="Remove texture"
