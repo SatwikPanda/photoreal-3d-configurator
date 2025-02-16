@@ -40,7 +40,7 @@ const ThreeScene = ({ model, onNodeSelected }: ThreeSceneProps) => {
       45,
       container.clientWidth / container.clientHeight,
       0.1,
-      1000
+      5000
     );
     camera.position.set(5, 5, 5);
     cameraRef.current = camera;
@@ -55,7 +55,6 @@ const ThreeScene = ({ model, onNodeSelected }: ThreeSceneProps) => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
@@ -169,6 +168,8 @@ const ThreeScene = ({ model, onNodeSelected }: ThreeSceneProps) => {
               object.material.side = THREE.DoubleSide;
               object.material.shadowSide = THREE.DoubleSide;
               object.material.needsUpdate = true;
+              object.material.depthWrite = true;
+              object.material.depthTest = true;
             }
           }
         }
@@ -244,11 +245,21 @@ const ThreeScene = ({ model, onNodeSelected }: ThreeSceneProps) => {
     rendererRef.current.toneMappingExposure = hdriIntensity;
   }, [hdriIntensity]);
 
-  // Update renderer settings
+  // Split renderer settings update into separate effects
+  useEffect(() => {
+    if (!rendererRef.current) return;
+    rendererRef.current.toneMapping = renderSettings.toneMapping;
+  }, [renderSettings.toneMapping]);
+
   useEffect(() => {
     if (!rendererRef.current) return;
     rendererRef.current.toneMappingExposure = renderSettings.exposure;
-  }, [renderSettings]);
+  }, [renderSettings.exposure]);
+
+  useEffect(() => {
+    if (!rendererRef.current) return;
+    rendererRef.current.outputColorSpace = renderSettings.outputColorSpace;
+  }, [renderSettings.outputColorSpace]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };
