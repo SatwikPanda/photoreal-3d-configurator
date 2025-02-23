@@ -6,6 +6,12 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader";
 import { useModel } from "../context/ModelContext"; // Fixed import path
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
+import { VignetteShader } from "three/examples/jsm/shaders/VignetteShader";
+import { RGBShiftShader } from "three/examples/jsm/shaders/RGBShiftShader";
 
 interface ThreeSceneProps {
   model: GLTF | null;
@@ -27,6 +33,10 @@ const ThreeScene = ({ model, onNodeSelected }: ThreeSceneProps) => {
   const controlsRef = useRef<OrbitControls | null>(null);
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
+  const composerRef = useRef<EffectComposer | null>(null);
+  const bloomPassRef = useRef<UnrealBloomPass | null>(null);
+  const vignettePassRef = useRef<ShaderPass | null>(null);
+  const chromaticAberrationPassRef = useRef<ShaderPass | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -83,13 +93,44 @@ const ThreeScene = ({ model, onNodeSelected }: ThreeSceneProps) => {
     controls.target.set(0, 0, 0);
     controlsRef.current = controls;
 
+    // Setup post-processing
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+
+    // Bloom
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(container.clientWidth, container.clientHeight),
+      1.5,
+      0.4,
+      0.85
+    );
+    bloomPass.enabled = renderSettings.postProcessing.bloom.enabled;
+    composer.addPass(bloomPass);
+    bloomPassRef.current = bloomPass;
+
+    // Vignette
+    const vignettePass = new ShaderPass(VignetteShader);
+    vignettePass.enabled = renderSettings.postProcessing.vignette;
+    composer.addPass(vignettePass);
+    vignettePassRef.current = vignettePass;
+
+    // Chromatic Aberration
+    const chromaticAberrationPass = new ShaderPass(RGBShiftShader);
+    chromaticAberrationPass.enabled =
+      renderSettings.postProcessing.chromaticAberration;
+    composer.addPass(chromaticAberrationPass);
+    chromaticAberrationPassRef.current = chromaticAberrationPass;
+
+    composerRef.current = composer;
+
     const animate = () => {
       requestAnimationFrame(animate);
       if (controlsRef.current) {
         controlsRef.current.update();
       }
-      if (rendererRef.current && cameraRef.current && sceneRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      if (composerRef.current) {
+        composerRef.current.render();
       }
     };
     animate();
@@ -260,6 +301,69 @@ const ThreeScene = ({ model, onNodeSelected }: ThreeSceneProps) => {
     if (!rendererRef.current) return;
     rendererRef.current.outputColorSpace = renderSettings.outputColorSpace;
   }, [renderSettings.outputColorSpace]);
+
+  // Handle post-processing updates
+  useEffect(() => {
+    if (!bloomPassRef.current) return;
+    const bloom = renderSettings.postProcessing.bloom;
+    bloomPassRef.current.enabled = bloom.enabled;
+    bloomPassRef.current.strength = bloom.intensity;
+    bloomPassRef.current.threshold = bloom.threshold;
+    bloomPassRef.current.radius = bloom.radius;
+  }, [renderSettings.postProcessing.bloom]);
+
+  useEffect(() => {
+    if (!vignettePassRef.current) return;
+    vignettePassRef.current.enabled = renderSettings.postProcessing.vignette;
+  }, [renderSettings.postProcessing.vignette]);
+
+  useEffect(() => {
+    if (!chromaticAberrationPassRef.current) return;
+    chromaticAberrationPassRef.current.enabled =
+      renderSettings.postProcessing.chromaticAberration;
+  }, [renderSettings.postProcessing.chromaticAberration]);
+
+  // Add realism settings effect
+  useEffect(() => {
+    if (!rendererRef.current || !sceneRef.current) return;
+
+    const renderer = rendererRef.current;
+    const scene = sceneRef.current;
+
+    if (renderSettings.realism.enabled) {
+      // Update lights instead of using physicallyCorrectLights
+      scene.traverse((object) => {
+        if (object instanceof THREE.Light) {
+          object.intensity = renderSettings.realism.environment.intensity;
+          if (object instanceof THREE.DirectionalLight) {
+            object.shadow.bias = renderSettings.realism.shadows.bias;
+            object.shadow.radius = renderSettings.realism.shadows.softness * 2;
+          }
+        }
+        if (object instanceof THREE.Mesh) {
+          if (object.material) {
+            const material = object.material as THREE.MeshStandardMaterial;
+            material.envMapIntensity =
+              renderSettings.realism.environment.intensity;
+            material.roughness = renderSettings.realism.material.roughness;
+            material.metalness = renderSettings.realism.material.metalness;
+            material.needsUpdate = true;
+          }
+        }
+      });
+    }
+  }, [renderSettings.realism]);
+
+  // Update shadow settings
+  useEffect(() => {
+    if (!rendererRef.current) return;
+    const renderer = rendererRef.current;
+
+    renderer.shadowMap.enabled = renderSettings.realism.shadows.enabled;
+    if (renderSettings.realism.shadows.enabled) {
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+  }, [renderSettings.realism.shadows]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };

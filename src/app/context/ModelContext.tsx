@@ -11,6 +11,33 @@ interface RenderSettings {
   exposure: number;
   outputColorSpace: THREE.ColorSpace;
   aoIntensity: number;
+  realism: {
+    enabled: boolean;
+    shadows: {
+      enabled: boolean;
+      softness: number;
+      bias: number;
+    };
+    environment: {
+      intensity: number;
+      blur: number;
+    };
+    material: {
+      roughness: number;
+      metalness: number;
+      envMapIntensity: number;
+    };
+  };
+  postProcessing: {
+    bloom: {
+      enabled: boolean;
+      intensity: number;
+      threshold: number;
+      radius: number;
+    };
+    vignette: boolean;
+    chromaticAberration: boolean;
+  };
 }
 
 interface ModelContextType {
@@ -65,6 +92,33 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
     exposure: 1.0,
     outputColorSpace: THREE.SRGBColorSpace,
     aoIntensity: 1.0,
+    realism: {
+      enabled: true,
+      shadows: {
+        enabled: true,
+        softness: 0.5,
+        bias: -0.001,
+      },
+      environment: {
+        intensity: 1.0,
+        blur: 0.0,
+      },
+      material: {
+        roughness: 0.5,
+        metalness: 0.5,
+        envMapIntensity: 1.0,
+      },
+    },
+    postProcessing: {
+      bloom: {
+        enabled: false,
+        intensity: 1,
+        threshold: 0.9,
+        radius: 0.8,
+      },
+      vignette: false,
+      chromaticAberration: false,
+    },
   });
   const [selectedOption, setSelectedOption] = useState("lighting");
 

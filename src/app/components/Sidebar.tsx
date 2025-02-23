@@ -230,8 +230,158 @@ const Sidebar = () => {
       case "render":
         return (
           <div className="p-4">
-            <h3 className={`text-lg font-semibold mb-4`}>Render Settings</h3>
-            <div className="space-y-4">
+            <h3 className={`text-lg tracking-tighter border-y p-2 font-semibold mb-4`}>Render Settings</h3>
+            <div className="space-y-6">
+              {/* Realism Settings */}
+              <div className="space-y-4">
+                <h4 className="text-lg border-y p-2 font-medium tracking-tighter">
+                  Realism
+                </h4>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Enable PBR</label>
+                  <input
+                    type="checkbox"
+                    checked={renderSettings.realism.enabled}
+                    onChange={(e) =>
+                      updateRenderSettings({
+                        realism: {
+                          ...renderSettings.realism,
+                          enabled: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                {renderSettings.realism.enabled && (
+                  <div className="space-y-4">
+                    {/* Environment Settings */}
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Environment Intensity
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="2"
+                        step="0.1"
+                        value={renderSettings.realism.environment.intensity}
+                        onChange={(e) =>
+                          updateRenderSettings({
+                            realism: {
+                              ...renderSettings.realism,
+                              environment: {
+                                ...renderSettings.realism.environment,
+                                intensity: Number(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Shadow Settings */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Shadows</label>
+                        <input
+                          type="checkbox"
+                          checked={renderSettings.realism.shadows.enabled}
+                          onChange={(e) =>
+                            updateRenderSettings({
+                              realism: {
+                                ...renderSettings.realism,
+                                shadows: {
+                                  ...renderSettings.realism.shadows,
+                                  enabled: e.target.checked,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+
+                      {renderSettings.realism.shadows.enabled && (
+                        <div className="pl-4 space-y-2">
+                          <div>
+                            <label className="block text-sm">Softness</label>
+                            <input
+                              type="range"
+                              min="0"
+                              max="1"
+                              step="0.1"
+                              value={renderSettings.realism.shadows.softness}
+                              onChange={(e) =>
+                                updateRenderSettings({
+                                  realism: {
+                                    ...renderSettings.realism,
+                                    shadows: {
+                                      ...renderSettings.realism.shadows,
+                                      softness: Number(e.target.value),
+                                    },
+                                  },
+                                })
+                              }
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Default Material Settings */}
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium">Default Material</h5>
+                      <div>
+                        <label className="block text-sm">Roughness</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.1"
+                          value={renderSettings.realism.material.roughness}
+                          onChange={(e) =>
+                            updateRenderSettings({
+                              realism: {
+                                ...renderSettings.realism,
+                                material: {
+                                  ...renderSettings.realism.material,
+                                  roughness: Number(e.target.value),
+                                },
+                              },
+                            })
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm">Metalness</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.1"
+                          value={renderSettings.realism.material.metalness}
+                          onChange={(e) =>
+                            updateRenderSettings({
+                              realism: {
+                                ...renderSettings.realism,
+                                material: {
+                                  ...renderSettings.realism.material,
+                                  metalness: Number(e.target.value),
+                                },
+                              },
+                            })
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Tone Mapping
@@ -296,6 +446,145 @@ const Sidebar = () => {
                   {renderSettings.aoIntensity.toFixed(1)}
                 </div>
               </div>
+
+              {/* Post Processing Settings */}
+              <div className="space-y-4">
+                <h4 className="text-lg border-y p-2 font-medium tracking-tighter">Post Processing</h4>
+
+                {/* Bloom Settings */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Bloom</label>
+                    <input
+                      type="checkbox"
+                      checked={renderSettings.postProcessing.bloom.enabled}
+                      onChange={(e) =>
+                        updateRenderSettings({
+                          postProcessing: {
+                            ...renderSettings.postProcessing,
+                            bloom: {
+                              ...renderSettings.postProcessing.bloom,
+                              enabled: e.target.checked,
+                            },
+                          },
+                        })
+                      }
+                    />
+                  </div>
+
+                  {renderSettings.postProcessing.bloom.enabled && (
+                    <div className="space-y-2 pl-4">
+                      <div>
+                        <label className="block text-sm">Intensity</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="3"
+                          step="0.1"
+                          value={renderSettings.postProcessing.bloom.intensity}
+                          onChange={(e) =>
+                            updateRenderSettings({
+                              postProcessing: {
+                                ...renderSettings.postProcessing,
+                                bloom: {
+                                  ...renderSettings.postProcessing.bloom,
+                                  intensity: Number(e.target.value),
+                                },
+                              },
+                            })
+                          }
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm">Threshold</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.1"
+                          value={renderSettings.postProcessing.bloom.threshold}
+                          onChange={(e) =>
+                            updateRenderSettings({
+                              postProcessing: {
+                                ...renderSettings.postProcessing,
+                                bloom: {
+                                  ...renderSettings.postProcessing.bloom,
+                                  threshold: Number(e.target.value),
+                                },
+                              },
+                            })
+                          }
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm">Radius</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="2"
+                          step="0.1"
+                          value={renderSettings.postProcessing.bloom.radius}
+                          onChange={(e) =>
+                            updateRenderSettings({
+                              postProcessing: {
+                                ...renderSettings.postProcessing,
+                                bloom: {
+                                  ...renderSettings.postProcessing.bloom,
+                                  radius: Number(e.target.value),
+                                },
+                              },
+                            })
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Other Effects */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Vignette</label>
+                    <input
+                      type="checkbox"
+                      checked={renderSettings.postProcessing.vignette}
+                      onChange={(e) =>
+                        updateRenderSettings({
+                          postProcessing: {
+                            ...renderSettings.postProcessing,
+                            vignette: e.target.checked,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">
+                      Chromatic Aberration
+                    </label>
+                    <input
+                      type="checkbox"
+                      checked={
+                        renderSettings.postProcessing.chromaticAberration
+                      }
+                      onChange={(e) =>
+                        updateRenderSettings({
+                          postProcessing: {
+                            ...renderSettings.postProcessing,
+                            chromaticAberration: e.target.checked,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -338,9 +627,13 @@ const Sidebar = () => {
         selectedOption={selectedOption}
         setSelectedOption={setSelectedOption}
       />
-      <div className="flex-1 flex flex-col overflow-y-auto">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/*nodeSelector()*/}
-        <div className="flex-1 overflow-y-auto">{renderContent()}</div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            {renderContent()}
+          </div>
+        </div>
       </div>
     </div>
   );
